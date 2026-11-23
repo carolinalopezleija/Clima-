@@ -62,6 +62,8 @@ async function consultarClima(evento) {
             latitude: lugar.latitude,
             longitude: lugar.longitude,
             current: "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m",
+            daily: "weather_code,temperature_2m_max,temperature_2m_min",
+            forecast_days: "4",
             timezone: "auto",
             temperature_unit: "celsius",
             wind_speed_unit: "kmh"
@@ -108,6 +110,8 @@ async function consultarClima(evento) {
             "Datos para " + actual.time.replace("T", " ") +
             " (hora local).";
 
+        mostrarPronostico(datosClima.daily);
+
         // Mostrar el resultado
         resultado.hidden = false;
         estado.textContent = "Consulta completada.";
@@ -118,6 +122,38 @@ async function consultarClima(evento) {
         estado.textContent = error.message;
         console.error(error);
     }
+}
+
+function mostrarPronostico(pronostico) {
+    const contenedorDias = document.querySelector("#dias-pronostico");
+    const dias = pronostico.time.slice(1, 4);
+
+    contenedorDias.replaceChildren();
+
+    dias.forEach((fecha, indice) => {
+        const condicion = describirClima(pronostico.weather_code[indice + 1]);
+        const tarjeta = document.createElement("article");
+        const nombreDia = document.createElement("h4");
+        const icono = document.createElement("span");
+        const descripcion = document.createElement("p");
+        const temperaturas = document.createElement("p");
+        const fechaLocal = new Date(fecha + "T00:00:00Z");
+
+        nombreDia.textContent = new Intl.DateTimeFormat("es", {
+            weekday: "long",
+            timeZone: "UTC"
+        }).format(fechaLocal);
+        icono.className = "icono-pronostico";
+        icono.textContent = condicion.icono;
+        icono.setAttribute("aria-hidden", "true");
+        descripcion.textContent = condicion.texto;
+        temperaturas.textContent =
+            pronostico.temperature_2m_min[indice + 1].toFixed(1) + " °C / " +
+            pronostico.temperature_2m_max[indice + 1].toFixed(1) + " °C";
+
+        tarjeta.append(nombreDia, icono, descripcion, temperaturas);
+        contenedorDias.append(tarjeta);
+    });
 }
 
 
